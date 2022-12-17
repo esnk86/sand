@@ -39,10 +39,6 @@ impl<'a> Slice<'a> {
         f32::ceil(UNITS_PER_ROW as f32 / 2.0) as usize - 1
     }
 
-    fn floor(&self) -> usize {
-        UNITS_PER_ROW
-    }
-
     fn run(&mut self) {
         while self.window.is_open() && !self.window.is_key_down(Key::Escape) {
             if self.handle_input() {
@@ -140,7 +136,7 @@ impl<'a> Slice<'a> {
                     y1 = y2;
                     self.put_unit(x1, y1, 1, Unit::Sand);
                     self.update();
-                    if y1 + 1 == self.floor() {
+                    if y1 + 1 == UNITS_PER_ROW {
                         break;
                     }
                     continue 'GRAVITY;
