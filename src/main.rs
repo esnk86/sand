@@ -161,12 +161,17 @@ impl<'a> Slice<'a> {
     fn buf_cursor(&mut self) {
         let (mx, my) = self.mouse_pos_to_unit_pos();
         let cs = self.cursor_size;
+        let bs = 2;
 
-        for uy in my .. my + self.cursor_size {
-            for ux in mx .. mx + self.cursor_size {
+        for uy in my .. my + cs {
+            for ux in mx .. mx + cs {
                 for py in 0 .. UNIT_WIDTH {
                     for px in 0 .. UNIT_WIDTH {
-                        if uy == my || uy == my+cs-1 || ux == mx || ux == mx+cs-1 {
+                        if uy == my && py < bs
+                        || uy == my + cs - 1 && py >= UNIT_WIDTH - bs
+                        || ux == mx && px < bs
+                        || ux == mx + cs - 1 && px >= UNIT_WIDTH - bs
+                        { 
                             let ky = uy * UNIT_WIDTH + py;
                             let mut kx = ux * UNIT_WIDTH + px;
                             kx = usize::min(kx, WINDOW_WIDTH-1);
