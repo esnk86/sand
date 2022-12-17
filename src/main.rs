@@ -48,28 +48,35 @@ impl<'a> Slice<'a> {
 
     fn run(&mut self) {
         while self.window.is_open() && !self.window.is_key_down(Key::Escape) {
-            if self.window.get_mouse_down(MouseButton::Left) {
-                let (x, y) = self.mouse_pos_to_unit_pos();
-                self.put_unit(x, y, self.cursor_size, Unit::Rock);
-            } else if self.window.get_mouse_down(MouseButton::Right) {
-                let (x, y) = self.mouse_pos_to_unit_pos();
-                self.put_unit(x, y, self.cursor_size, Unit::Air);
-            } else if self.window.get_mouse_down(MouseButton::Middle) {
+            if self.handle_input() {
                 break;
-            } else if let Some(scroll) = self.window.get_scroll_wheel() {
-                if scroll.1 > 0.0 {
-                    self.cursor_size += 1;
-                } else {
-                    self.cursor_size -= 1;
-                }
             }
-
             self.update();
         }
 
         while self.window.is_open() && !self.window.is_key_down(Key::Escape) {
             self.put_sand_unit();
         }
+    }
+
+    fn handle_input(&mut self) -> bool {
+        if self.window.get_mouse_down(MouseButton::Left) {
+            let (x, y) = self.mouse_pos_to_unit_pos();
+            self.put_unit(x, y, self.cursor_size, Unit::Rock);
+        } else if self.window.get_mouse_down(MouseButton::Right) {
+            let (x, y) = self.mouse_pos_to_unit_pos();
+            self.put_unit(x, y, self.cursor_size, Unit::Air);
+        } else if self.window.get_mouse_down(MouseButton::Middle) {
+            return true;
+        } else if let Some(scroll) = self.window.get_scroll_wheel() {
+            if scroll.1 > 0.0 {
+                self.cursor_size += 1;
+            } else {
+                self.cursor_size -= 1;
+            }
+        }
+
+        return false;
     }
 
     fn put_unit(&mut self, x: usize, y: usize, scale: usize, unit: Unit) {
@@ -125,6 +132,8 @@ impl<'a> Slice<'a> {
         let mut y1 = 0;
 
         'GRAVITY: loop {
+            self.handle_input();
+
             let mut y2 = y1 + 1;
 
             for x2 in [x1, x1-1, x1+1] {
