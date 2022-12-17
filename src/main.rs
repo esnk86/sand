@@ -40,16 +40,20 @@ impl<'a> Slice<'a> {
         f32::ceil(UNITS_PER_ROW as f32 / 2.0) as usize - 1
     }
 
-    fn run(&mut self) {
-        while self.window.is_open() && !self.window.is_key_down(Key::Escape) {
-            if self.handle_input() {
-                break;
-            }
-            self.update();
-        }
+    fn running(&self) -> bool {
+        self.window.is_open()
+    }
 
-        while self.window.is_open() && !self.window.is_key_down(Key::Escape) {
-            self.put_sand_unit();
+    fn run(&mut self) {
+        while self.running() {
+            while self.running() && self.handle_input() {
+                self.update();
+            }
+
+            while self.running() && self.put_sand_unit() {
+            }
+
+            self.clear_sand();
         }
     }
 
@@ -60,8 +64,9 @@ impl<'a> Slice<'a> {
         } else if self.window.get_mouse_down(MouseButton::Right) {
             let (x, y) = self.mouse_pos_to_unit_pos();
             self.put_unit(x, y, self.cursor_size, Unit::Air);
-        } else if self.window.get_mouse_down(MouseButton::Middle) {
-            return true;
+        } else if self.window.is_key_released(Key::S) {
+            self.update();
+            return false;
         } else if let Some(scroll) = self.window.get_scroll_wheel() {
             if scroll.1 > 0.0 {
                 self.cursor_size += 2;
@@ -70,7 +75,7 @@ impl<'a> Slice<'a> {
             }
         }
 
-        return false;
+        return true;
     }
 
     fn put_unit(&mut self, x: usize, y: usize, scale: usize, unit: Unit) {
@@ -129,12 +134,14 @@ impl<'a> Slice<'a> {
         (ux, uy)
     }
 
-    fn put_sand_unit(&mut self) {
+    fn put_sand_unit(&mut self) -> bool {
         let mut x1 = self.centre();
         let mut y1 = 0;
 
         'GRAVITY: loop {
-            self.handle_input();
+            if !self.handle_input() {
+                return false;
+            }
 
             let y2 = y1 + 1;
 
@@ -154,7 +161,17 @@ impl<'a> Slice<'a> {
 
             self.put_unit(x1, y1, 1, Unit::Sand);
             self.update();
-            return;
+            return true;
+        }
+    }
+
+    fn clear_sand(&mut self) {
+        for (_, row) in self.slice.iter_mut() {
+            for (_, p) in row.iter_mut() {
+                if *p == Unit::Sand {
+                    *p = Unit::Air;
+                }
+            }
         }
     }
 
