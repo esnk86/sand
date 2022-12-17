@@ -11,3 +11,7 @@ Right click deletes things under the cursor (rocks and sand)
 The scroll wheel adjusts the cursor size
 
 Middle click makes the sand start falling
+
+## Screenshots
+
+![Alt text](/screens/screen01.png?raw=true)
