@@ -16,7 +16,6 @@ enum Unit {
 
 struct Slice<'a> {
     slice: HashMap<usize, HashMap<usize, Unit>>,
-    bottom: usize,
     buffer: Vec<u32>,
     window: &'a mut Window,
     cursor_size: usize,
@@ -25,13 +24,11 @@ struct Slice<'a> {
 impl<'a> Slice<'a> {
     fn new(window: &'a mut Window) -> Self {
         let slice = HashMap::new();
-        let bottom = 0;
         let buffer = vec![0; WINDOW_WIDTH * WINDOW_WIDTH];
         let cursor_size = 1;
 
         Self {
             slice,
-            bottom,
             buffer,
             window,
             cursor_size,
@@ -134,7 +131,7 @@ impl<'a> Slice<'a> {
         'GRAVITY: loop {
             self.handle_input();
 
-            let mut y2 = y1 + 1;
+            let y2 = y1 + 1;
 
             for x2 in [x1, x1-1, x1+1] {
                 if self.get_unit(x2, y2) == Unit::Air {
