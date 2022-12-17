@@ -189,6 +189,8 @@ fn main() {
         panic!("{}", e);
     });
 
+    window.set_cursor_visibility(false);
+
     window.limit_update_rate(Some(time::Duration::from_micros(16600)));
 
     let mut slice = Slice::new(&mut window);
