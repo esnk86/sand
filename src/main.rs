@@ -58,10 +58,8 @@ impl<'a> Slice<'a> {
             self.update();
         }
 
-        self.put_sand_unit();
-
         while self.window.is_open() && !self.window.is_key_down(Key::Escape) {
-            self.update();
+            self.put_sand_unit();
         }
     }
 
@@ -87,9 +85,9 @@ impl<'a> Slice<'a> {
 
     fn buf_unit(&mut self, x: usize, y: usize) {
         let colour = match self.get_unit(x, y) {
-            Unit::Air => 0x5368a0,
-            Unit::Rock => 0x5a3e36,
-            Unit::Sand => 0xe5d68e,
+            Unit::Air => 0x6b573d,
+            Unit::Rock => 0x7a6e5e,
+            Unit::Sand => 0xd8ccbb,
         };
 
         for py in 0 .. UNIT_WIDTH {
@@ -131,6 +129,7 @@ impl<'a> Slice<'a> {
             }
 
             self.put_unit(x1, y1, Unit::Sand);
+            self.update();
             return;
         }
     }
