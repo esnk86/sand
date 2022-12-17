@@ -24,7 +24,7 @@ impl<'a> Slice<'a> {
     fn new(window: &'a mut Window) -> Self {
         let slice = HashMap::new();
         let buffer = vec![0; WINDOW_WIDTH * WINDOW_WIDTH];
-        let cursor_size = 1;
+        let cursor_size = 8;
         let theme = Theme::get(ThemeId::Sandshell);
 
         Self {
