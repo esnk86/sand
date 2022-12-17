@@ -111,6 +111,14 @@ impl<'a> Slice<'a> {
         }
     }
 
+    fn buf_units(&mut self) {
+        for y in 0 .. UNITS_PER_ROW {
+            for x in 0 .. UNITS_PER_ROW {
+                self.buf_unit(x, y);
+            }
+        }
+    }
+
     fn mouse_pos_to_unit_pos(&self) -> (usize, usize) {
         let mouse_pos = self.window.get_mouse_pos(MouseMode::Clamp).unwrap();
         let mx = mouse_pos.0;
@@ -150,27 +158,32 @@ impl<'a> Slice<'a> {
         }
     }
 
-    fn update(&mut self) {
-        for y in 0 .. UNITS_PER_ROW {
-            for x in 0 .. UNITS_PER_ROW {
-                self.buf_unit(x, y);
-            }
-        }
+    fn buf_cursor(&mut self) {
+        let (mx, my) = self.mouse_pos_to_unit_pos();
+        let cs = self.cursor_size;
 
-        let ms = self.cursor_size * UNIT_WIDTH;
-        let (ux, uy) = self.mouse_pos_to_unit_pos();
-
-        for py in 0 .. ms {
-            for px in 0 .. ms {
-                let ky = uy * UNIT_WIDTH + py;
-                let mut kx = ux * UNIT_WIDTH + px;
-                kx = usize::min(kx, WINDOW_WIDTH);
-                let i = ky * WINDOW_WIDTH + kx;
-                if i < self.buffer.len() {
-                    self.buffer[i] = 0;
+        for uy in my .. my + self.cursor_size {
+            for ux in mx .. mx + self.cursor_size {
+                for py in 0 .. UNIT_WIDTH {
+                    for px in 0 .. UNIT_WIDTH {
+                        if uy == my || uy == my+cs-1 || ux == mx || ux == mx+cs-1 {
+                            let ky = uy * UNIT_WIDTH + py;
+                            let mut kx = ux * UNIT_WIDTH + px;
+                            kx = usize::min(kx, WINDOW_WIDTH-1);
+                            let i = ky * WINDOW_WIDTH + kx;
+                            if i < self.buffer.len() {
+                                self.buffer[i] = 0;
+                            }
+                        }
+                    }
                 }
             }
         }
+    }
+
+    fn update(&mut self) {
+        self.buf_units();
+        self.buf_cursor();
 
         self.window
             .update_with_buffer(&self.buffer, WINDOW_WIDTH, WINDOW_WIDTH)
