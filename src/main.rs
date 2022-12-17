@@ -161,7 +161,10 @@ impl<'a> Slice<'a> {
 
         for py in 0 .. ms {
             for px in 0 .. ms {
-                let i = (uy * UNIT_WIDTH + py) * WINDOW_WIDTH + (ux * UNIT_WIDTH + px);
+                let ky = uy * UNIT_WIDTH + py;
+                let mut kx = ux * UNIT_WIDTH + px;
+                kx = usize::min(kx, WINDOW_WIDTH);
+                let i = ky * WINDOW_WIDTH + kx;
                 if i < self.buffer.len() {
                     self.buffer[i] = 0;
                 }
