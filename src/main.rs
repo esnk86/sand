@@ -1,6 +1,7 @@
 use minifb::{Key, Window, WindowOptions, MouseButton, MouseMode};
 
 use std::collections::HashMap;
+use std::time;
 
 const UNIT_WIDTH: usize = 16;
 const UNITS_PER_ROW: usize = 39;
@@ -54,29 +55,13 @@ impl<'a> Slice<'a> {
                 break;
             }
 
-            for y in 0 .. UNITS_PER_ROW {
-                for x in 0 .. UNITS_PER_ROW {
-                    self.buf_unit(x, y);
-                }
-            }
-
-            self.window
-                .update_with_buffer(&self.buffer, WINDOW_WIDTH, WINDOW_WIDTH)
-                .unwrap();
+            self.update();
         }
 
         self.put_sand_unit();
 
         while self.window.is_open() && !self.window.is_key_down(Key::Escape) {
-            for y in 0 .. UNITS_PER_ROW {
-                for x in 0 .. UNITS_PER_ROW {
-                    self.buf_unit(x, y);
-                }
-            }
-
-            self.window
-                .update_with_buffer(&self.buffer, WINDOW_WIDTH, WINDOW_WIDTH)
-                .unwrap();
+            self.update();
         }
     }
 
@@ -129,13 +114,15 @@ impl<'a> Slice<'a> {
         let mut y1 = 0;
 
         'GRAVITY: loop {
-            println!("{x1},{y1}");
             let mut y2 = y1 + 1;
 
             for x2 in [x1, x1-1, x1+1] {
                 if self.get_unit(x2, y2) == Unit::Air {
+                    self.put_unit(x1, y1, Unit::Air);
                     x1 = x2;
                     y1 = y2;
+                    self.put_unit(x1, y1, Unit::Sand);
+                    self.update();
                     if y1 + 1 == self.floor() {
                         break;
                     }
@@ -146,6 +133,18 @@ impl<'a> Slice<'a> {
             self.put_unit(x1, y1, Unit::Sand);
             return;
         }
+    }
+
+    fn update(&mut self) {
+        for y in 0 .. UNITS_PER_ROW {
+            for x in 0 .. UNITS_PER_ROW {
+                self.buf_unit(x, y);
+            }
+        }
+
+        self.window
+            .update_with_buffer(&self.buffer, WINDOW_WIDTH, WINDOW_WIDTH)
+            .unwrap();
     }
 }
 
@@ -160,7 +159,7 @@ fn main() {
         panic!("{}", e);
     });
 
-    window.limit_update_rate(Some(std::time::Duration::from_micros(16600)));
+    window.limit_update_rate(Some(time::Duration::from_micros(16600)));
 
     let mut slice = Slice::new(&mut window);
 
