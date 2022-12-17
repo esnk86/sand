@@ -6,7 +6,7 @@ const UNIT_WIDTH: usize = 16;
 const UNITS_PER_ROW: usize = 39;
 const WINDOW_WIDTH: usize = UNIT_WIDTH * UNITS_PER_ROW;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 enum Unit {
     Air,
     Rock,
@@ -38,12 +38,11 @@ impl<'a> Slice<'a> {
         f32::ceil(UNITS_PER_ROW as f32 / 2.0) as usize - 1
     }
 
-    fn run(&mut self) {
-        let mut row = HashMap::new();
-        row.insert(0, Unit::Rock);
-        row.insert(self.centre(), Unit::Sand);
-        self.slice.insert(0, row);
+    fn floor(&self) -> usize {
+        UNITS_PER_ROW
+    }
 
+    fn run(&mut self) {
         while self.window.is_open() && !self.window.is_key_down(Key::Escape) {
             if self.window.get_mouse_down(MouseButton::Left) {
                 let (x, y) = self.mouse_pos_to_unit_pos();
@@ -51,8 +50,24 @@ impl<'a> Slice<'a> {
             } else if self.window.get_mouse_down(MouseButton::Right) {
                 let (x, y) = self.mouse_pos_to_unit_pos();
                 self.put_unit(x, y, Unit::Air);
+            } else if self.window.get_mouse_down(MouseButton::Middle) {
+                break;
             }
 
+            for y in 0 .. UNITS_PER_ROW {
+                for x in 0 .. UNITS_PER_ROW {
+                    self.buf_unit(x, y);
+                }
+            }
+
+            self.window
+                .update_with_buffer(&self.buffer, WINDOW_WIDTH, WINDOW_WIDTH)
+                .unwrap();
+        }
+
+        self.put_sand_unit();
+
+        while self.window.is_open() && !self.window.is_key_down(Key::Escape) {
             for y in 0 .. UNITS_PER_ROW {
                 for x in 0 .. UNITS_PER_ROW {
                     self.buf_unit(x, y);
@@ -107,6 +122,30 @@ impl<'a> Slice<'a> {
         let uy = my as usize / UNIT_WIDTH;
 
         (ux, uy)
+    }
+
+    fn put_sand_unit(&mut self) {
+        let mut x1 = self.centre();
+        let mut y1 = 0;
+
+        'GRAVITY: loop {
+            println!("{x1},{y1}");
+            let mut y2 = y1 + 1;
+
+            for x2 in [x1, x1-1, x1+1] {
+                if self.get_unit(x2, y2) == Unit::Air {
+                    x1 = x2;
+                    y1 = y2;
+                    if y1 + 1 == self.floor() {
+                        break;
+                    }
+                    continue 'GRAVITY;
+                }
+            }
+
+            self.put_unit(x1, y1, Unit::Sand);
+            return;
+        }
     }
 }
 
