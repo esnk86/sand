@@ -1,9 +1,9 @@
-use minifb::{Key, Window, WindowOptions};
+use minifb::{Key, Window, WindowOptions, MouseButton, MouseMode};
 
 use std::collections::HashMap;
 
-const UNIT_WIDTH: usize = 64;
-const UNITS_PER_ROW: usize = 9;
+const UNIT_WIDTH: usize = 16;
+const UNITS_PER_ROW: usize = 39;
 const WINDOW_WIDTH: usize = UNIT_WIDTH * UNITS_PER_ROW;
 
 #[derive(Clone, Copy)]
@@ -40,22 +40,38 @@ impl<'a> Slice<'a> {
 
     fn run(&mut self) {
         let mut row = HashMap::new();
-
         row.insert(0, Unit::Rock);
         row.insert(self.centre(), Unit::Sand);
-
         self.slice.insert(0, row);
 
-        for y in 0 .. UNITS_PER_ROW {
-            for x in 0 .. UNITS_PER_ROW {
-                self.put_unit(x, y);
-            }
-        }
-
         while self.window.is_open() && !self.window.is_key_down(Key::Escape) {
+            if self.window.get_mouse_down(MouseButton::Left) {
+                let (x, y) = self.mouse_pos_to_unit_pos();
+                self.put_unit(x, y, Unit::Rock);
+            } else if self.window.get_mouse_down(MouseButton::Right) {
+                let (x, y) = self.mouse_pos_to_unit_pos();
+                self.put_unit(x, y, Unit::Air);
+            }
+
+            for y in 0 .. UNITS_PER_ROW {
+                for x in 0 .. UNITS_PER_ROW {
+                    self.buf_unit(x, y);
+                }
+            }
+
             self.window
                 .update_with_buffer(&self.buffer, WINDOW_WIDTH, WINDOW_WIDTH)
                 .unwrap();
+        }
+    }
+
+    fn put_unit(&mut self, x: usize, y: usize, unit: Unit) {
+        if let Some(row) = self.slice.get_mut(&y) {
+            row.insert(x, unit);
+        } else {
+            let mut row = HashMap::new();
+            row.insert(x, unit);
+            self.slice.insert(y, row);
         }
     }
 
@@ -69,7 +85,7 @@ impl<'a> Slice<'a> {
         }
     }
 
-    fn put_unit(&mut self, x: usize, y: usize) {
+    fn buf_unit(&mut self, x: usize, y: usize) {
         let colour = match self.get_unit(x, y) {
             Unit::Air => 0x5368a0,
             Unit::Rock => 0x5a3e36,
@@ -81,6 +97,16 @@ impl<'a> Slice<'a> {
                 self.buffer[(y * UNIT_WIDTH + py) * WINDOW_WIDTH + (x * UNIT_WIDTH + px)] = colour;
             }
         }
+    }
+
+    fn mouse_pos_to_unit_pos(&self) -> (usize, usize) {
+        let mouse_pos = self.window.get_mouse_pos(MouseMode::Clamp).unwrap();
+        let mx = mouse_pos.0;
+        let my = mouse_pos.1;
+        let ux = mx as usize / UNIT_WIDTH;
+        let uy = my as usize / UNIT_WIDTH;
+
+        (ux, uy)
     }
 }
 
