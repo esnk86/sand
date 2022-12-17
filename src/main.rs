@@ -1,24 +1,23 @@
-use minifb::{Key, Window, WindowOptions, MouseButton, MouseMode};
+mod theme;
+mod unit;
 
+use crate::theme::{Theme, ThemeId};
+use crate::unit::Unit;
 use std::collections::HashMap;
 use std::time;
+
+use minifb::{Key, Window, WindowOptions, MouseButton, MouseMode};
 
 const UNIT_WIDTH: usize = 16;
 const UNITS_PER_ROW: usize = 39;
 const WINDOW_WIDTH: usize = UNIT_WIDTH * UNITS_PER_ROW;
-
-#[derive(Clone, Copy, PartialEq)]
-enum Unit {
-    Air,
-    Rock,
-    Sand,
-}
 
 struct Slice<'a> {
     slice: HashMap<usize, HashMap<usize, Unit>>,
     buffer: Vec<u32>,
     window: &'a mut Window,
     cursor_size: usize,
+    theme: Theme,
 }
 
 impl<'a> Slice<'a> {
@@ -26,12 +25,14 @@ impl<'a> Slice<'a> {
         let slice = HashMap::new();
         let buffer = vec![0; WINDOW_WIDTH * WINDOW_WIDTH];
         let cursor_size = 1;
+        let theme = Theme::get(ThemeId::Sandshell);
 
         Self {
             slice,
             buffer,
             window,
             cursor_size,
+            theme,
         }
     }
 
@@ -98,9 +99,9 @@ impl<'a> Slice<'a> {
 
     fn buf_unit(&mut self, x: usize, y: usize) {
         let colour = match self.get_unit(x, y) {
-            Unit::Air => 0x6b573d,
-            Unit::Rock => 0x7a6e5e,
-            Unit::Sand => 0xd8ccbb,
+            Unit::Air => self.theme.0,
+            Unit::Rock => self.theme.1,
+            Unit::Sand => self.theme.2,
         };
 
         for py in 0 .. UNIT_WIDTH {
