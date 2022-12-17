@@ -64,9 +64,9 @@ impl<'a> Slice<'a> {
             return true;
         } else if let Some(scroll) = self.window.get_scroll_wheel() {
             if scroll.1 > 0.0 {
-                self.cursor_size += 1;
-            } else if self.cursor_size > 1 {
-                self.cursor_size -= 1;
+                self.cursor_size += 2;
+            } else if self.cursor_size > 2 {
+                self.cursor_size -= 2;
             }
         }
 
