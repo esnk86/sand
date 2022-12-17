@@ -4,13 +4,17 @@ Animation of Advent of Code 2022 Day 14
 
 ## Controls
 
-Left click places rocks under the cursor
+### Mouse
 
-Right click deletes things under the cursor (rocks and sand)
+Left click - place rocks under the cursor
 
-The scroll wheel adjusts the cursor size
+Right click - delete things under the cursor (rocks and sand)
 
-Middle click makes the sand start falling
+Scroll wheel - adjust cursor size
+
+### Keys
+
+s - start/stop sand
 
 ## Screenshots
 
