@@ -19,6 +19,7 @@ struct Slice<'a> {
     bottom: usize,
     buffer: Vec<u32>,
     window: &'a mut Window,
+    cursor_size: usize,
 }
 
 impl<'a> Slice<'a> {
@@ -26,12 +27,14 @@ impl<'a> Slice<'a> {
         let slice = HashMap::new();
         let bottom = 0;
         let buffer = vec![0; WINDOW_WIDTH * WINDOW_WIDTH];
+        let cursor_size = 1;
 
         Self {
             slice,
             bottom,
             buffer,
             window,
+            cursor_size,
         }
     }
 
@@ -47,12 +50,18 @@ impl<'a> Slice<'a> {
         while self.window.is_open() && !self.window.is_key_down(Key::Escape) {
             if self.window.get_mouse_down(MouseButton::Left) {
                 let (x, y) = self.mouse_pos_to_unit_pos();
-                self.put_unit(x, y, Unit::Rock);
+                self.put_unit(x, y, self.cursor_size, Unit::Rock);
             } else if self.window.get_mouse_down(MouseButton::Right) {
                 let (x, y) = self.mouse_pos_to_unit_pos();
-                self.put_unit(x, y, Unit::Air);
+                self.put_unit(x, y, self.cursor_size, Unit::Air);
             } else if self.window.get_mouse_down(MouseButton::Middle) {
                 break;
+            } else if let Some(scroll) = self.window.get_scroll_wheel() {
+                if scroll.1 > 0.0 {
+                    self.cursor_size += 1;
+                } else {
+                    self.cursor_size -= 1;
+                }
             }
 
             self.update();
@@ -63,13 +72,17 @@ impl<'a> Slice<'a> {
         }
     }
 
-    fn put_unit(&mut self, x: usize, y: usize, unit: Unit) {
-        if let Some(row) = self.slice.get_mut(&y) {
-            row.insert(x, unit);
-        } else {
-            let mut row = HashMap::new();
-            row.insert(x, unit);
-            self.slice.insert(y, row);
+    fn put_unit(&mut self, x: usize, y: usize, scale: usize, unit: Unit) {
+        for y1 in 0 .. scale {
+            for x1 in 0 .. scale {
+                if let Some(row) = self.slice.get_mut(&(y + y1)) {
+                    row.insert(x + x1, unit);
+                } else {
+                    let mut row = HashMap::new();
+                    row.insert(x + x1, unit);
+                    self.slice.insert(y + y1, row);
+                }
+            }
         }
     }
 
@@ -116,10 +129,10 @@ impl<'a> Slice<'a> {
 
             for x2 in [x1, x1-1, x1+1] {
                 if self.get_unit(x2, y2) == Unit::Air {
-                    self.put_unit(x1, y1, Unit::Air);
+                    self.put_unit(x1, y1, 1, Unit::Air);
                     x1 = x2;
                     y1 = y2;
-                    self.put_unit(x1, y1, Unit::Sand);
+                    self.put_unit(x1, y1, 1, Unit::Sand);
                     self.update();
                     if y1 + 1 == self.floor() {
                         break;
@@ -128,7 +141,7 @@ impl<'a> Slice<'a> {
                 }
             }
 
-            self.put_unit(x1, y1, Unit::Sand);
+            self.put_unit(x1, y1, 1, Unit::Sand);
             self.update();
             return;
         }
@@ -138,6 +151,18 @@ impl<'a> Slice<'a> {
         for y in 0 .. UNITS_PER_ROW {
             for x in 0 .. UNITS_PER_ROW {
                 self.buf_unit(x, y);
+            }
+        }
+
+        let ms = self.cursor_size * UNIT_WIDTH;
+        let (ux, uy) = self.mouse_pos_to_unit_pos();
+
+        for py in 0 .. ms {
+            for px in 0 .. ms {
+                let i = (uy * UNIT_WIDTH + py) * WINDOW_WIDTH + (ux * UNIT_WIDTH + px);
+                if i < self.buffer.len() {
+                    self.buffer[i] = 0;
+                }
             }
         }
 
