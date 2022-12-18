@@ -100,9 +100,9 @@ impl<'a> Slice<'a> {
             self.update();
             self.stop();
             return false;
-        } else if self.window.is_key_down(Key::Left) && self.emitter > 1 {
+        } else if self.window.is_key_down(Key::Left) && self.emitter > 0 {
             self.emitter -= 1;
-        } else if self.window.is_key_down(Key::Right) && self.emitter < UNITS_PER_ROW - 2 {
+        } else if self.window.is_key_down(Key::Right) && self.emitter < UNITS_PER_ROW - 1 {
             self.emitter += 1;
         }
 
@@ -176,11 +176,10 @@ impl<'a> Slice<'a> {
         let y1 = self.y.unwrap();
         let y2 = y1 + 1;
 
-        for x2 in [x1, x1-1, x1+1] {
+        for x2 in [x1, if x1>0{x1-1}else{x1}, if x1<UNITS_PER_ROW-1{x1+1}else{x1}] {
             if self.get_unit(x2, y2) == Unit::Air {
                 self.put_unit(x1, y1, 1, Unit::Air);
                 self.put_unit(x2, y2, 1, Unit::Sand);
-                //self.update();
                 self.x = Some(x2);
                 self.y = Some(y2);
                 if y2 >= UNITS_PER_ROW - 1 {
