@@ -194,15 +194,6 @@ impl<'a> Slice<'a> {
     }
 
     fn clear_sand(&mut self) {
-        /*
-        for (_, row) in self.slice.iter_mut() {
-            for (_, p) in row.iter_mut() {
-                if *p == Unit::Sand {
-                    *p = Unit::Air;
-                }
-            }
-        }
-        */
         for y in 0 .. UNITS_PER_ROW {
             for x in 0 .. UNITS_PER_ROW {
                 if self.slice[y][x] == Unit::Sand {
