@@ -27,6 +27,7 @@ struct Slice<'a> {
     state: State,
     x: Option<usize>,
     y: Option<usize>,
+    emitter: usize,
 }
 
 impl<'a> Slice<'a> {
@@ -38,6 +39,7 @@ impl<'a> Slice<'a> {
         let state = State::Stopped;
         let x = None;
         let y = None;
+        let emitter = Self::centre();
 
         Self {
             slice,
@@ -48,10 +50,11 @@ impl<'a> Slice<'a> {
             state,
             x,
             y,
+            emitter,
         }
     }
 
-    fn centre(&self) -> usize {
+    fn centre() -> usize {
         f32::ceil(UNITS_PER_ROW as f32 / 2.0) as usize - 1
     }
 
@@ -97,6 +100,10 @@ impl<'a> Slice<'a> {
             self.update();
             self.stop();
             return false;
+        } else if self.window.is_key_down(Key::Left) && self.emitter > 1 {
+            self.emitter -= 1;
+        } else if self.window.is_key_down(Key::Right) && self.emitter < UNITS_PER_ROW - 2 {
+            self.emitter += 1;
         }
 
         self.update();
@@ -161,7 +168,7 @@ impl<'a> Slice<'a> {
 
     fn gravity(&mut self) {
         if self.x.is_none() {
-            self.x = Some(self.centre());
+            self.x = Some(self.emitter);
             self.y = Some(0);
         }
 
@@ -193,6 +200,14 @@ impl<'a> Slice<'a> {
                 if *p == Unit::Sand {
                     *p = Unit::Air;
                 }
+            }
+        }
+    }
+
+    fn buf_emitter(&mut self) {
+        for py in 0 .. UNIT_WIDTH {
+            for px in 0 .. UNIT_WIDTH {
+                self.buffer[py * WINDOW_WIDTH + self.emitter * UNIT_WIDTH + px] = 0;
             }
         }
     }
@@ -258,6 +273,7 @@ impl<'a> Slice<'a> {
 
     fn update(&mut self) {
         self.buf_units();
+        self.buf_emitter();
         self.buf_cursor();
 
         self.window
