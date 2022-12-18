@@ -3,7 +3,6 @@ mod unit;
 
 use crate::theme::{Theme, ThemeId};
 use crate::unit::Unit;
-use std::collections::HashMap;
 use std::time;
 
 use minifb::{Key, Window, WindowOptions, MouseButton, MouseMode};
@@ -19,7 +18,7 @@ enum State {
 }
 
 struct Slice<'a> {
-    slice: HashMap<usize, HashMap<usize, Unit>>,
+    slice: [[Unit; UNITS_PER_ROW]; UNITS_PER_ROW],
     buffer: Vec<u32>,
     window: &'a mut Window,
     cursor_pos: (usize, usize),
@@ -33,7 +32,7 @@ struct Slice<'a> {
 
 impl<'a> Slice<'a> {
     fn new(window: &'a mut Window) -> Self {
-        let slice = HashMap::new();
+        let slice = [[Unit::Air; UNITS_PER_ROW]; UNITS_PER_ROW];
         let buffer = vec![0; WINDOW_WIDTH * WINDOW_WIDTH];
         let cursor_pos = (0, 0);
         let cursor_size = 8;
@@ -119,32 +118,16 @@ impl<'a> Slice<'a> {
     }
 
     fn put_unit(&mut self, x: usize, y: usize, scale: usize, unit: Unit) {
-        for y1 in 0 .. scale {
-            for x1 in 0 .. scale {
-                if let Some(row) = self.slice.get_mut(&(y + y1)) {
-                    row.insert(x + x1, unit);
-                } else {
-                    let mut row = HashMap::new();
-                    row.insert(x + x1, unit);
-                    self.slice.insert(y + y1, row);
-                }
-                self.buf_unit(x + x1, y + y1);
-            }
-        }
-    }
-
-    fn get_unit(&self, x: usize, y: usize) -> Unit {
-        match self.slice.get(&y) {
-            None => Unit::Air,
-            Some(row) => match row.get(&x) {
-                None => Unit::Air,
-                Some(&u) => u,
+        for uy in y .. y + scale {
+            for ux in x .. x + scale {
+                self.slice[uy][ux] = unit;
+                self.buf_unit(ux, uy);
             }
         }
     }
 
     fn buf_unit(&mut self, x: usize, y: usize) {
-        let colour = match self.get_unit(x, y) {
+        let colour = match self.slice[y][x] {
             Unit::Air => self.theme.0,
             Unit::Rock => self.theme.1,
             Unit::Sand => self.theme.2,
@@ -189,7 +172,7 @@ impl<'a> Slice<'a> {
         let y2 = y1 + 1;
 
         for x2 in [x1, if x1>0{x1-1}else{x1}, if x1<UNITS_PER_ROW-1{x1+1}else{x1}] {
-            if self.get_unit(x2, y2) == Unit::Air {
+            if self.slice[y2][x2] == Unit::Air {
                 self.put_unit(x1, y1, 1, Unit::Air);
                 self.put_unit(x2, y2, 1, Unit::Sand);
                 self.update();
@@ -211,10 +194,19 @@ impl<'a> Slice<'a> {
     }
 
     fn clear_sand(&mut self) {
+        /*
         for (_, row) in self.slice.iter_mut() {
             for (_, p) in row.iter_mut() {
                 if *p == Unit::Sand {
                     *p = Unit::Air;
+                }
+            }
+        }
+        */
+        for y in 0 .. UNITS_PER_ROW {
+            for x in 0 .. UNITS_PER_ROW {
+                if self.slice[y][x] == Unit::Sand {
+                    self.slice[y][x] = Unit::Air;
                 }
             }
         }
