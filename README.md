@@ -12,10 +12,14 @@ Right click - delete things under the cursor (rocks and sand)
 
 Scroll wheel - adjust cursor size
 
-### Keys
+### Keyboard
 
 s - start sand
 
 p - pause sand
 
 m - stop sand
+
+left arrow key - move sand emitter left
+
+right arrow key - move sand emitter right
