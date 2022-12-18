@@ -105,12 +105,13 @@ impl<'a> Slice<'a> {
             self.stop();
             return false;
         } else if self.window.is_key_down(Key::Left) && self.emitter > 0 {
+            self.update();
             self.emitter -= 1;
         } else if self.window.is_key_down(Key::Right) && self.emitter < UNITS_PER_ROW - 1 {
+            self.update();
             self.emitter += 1;
         }
 
-        self.update();
         return true;
     }
 
@@ -188,6 +189,7 @@ impl<'a> Slice<'a> {
             if self.get_unit(x2, y2) == Unit::Air {
                 self.put_unit(x1, y1, 1, Unit::Air);
                 self.put_unit(x2, y2, 1, Unit::Sand);
+                self.update();
                 self.x = Some(x2);
                 self.y = Some(y2);
                 if y2 >= UNITS_PER_ROW - 1 {
@@ -273,6 +275,7 @@ impl<'a> Slice<'a> {
         self.x = None;
         self.y = None;
         self.clear_sand();
+        self.buf_units();
         self.state = State::Stopped;
     }
 
@@ -284,11 +287,13 @@ impl<'a> Slice<'a> {
 
     fn paused(&mut self) {
         while self.running() && self.handle_input() {
+            self.update();
         }
     }
 
     fn stopped(&mut self) {
         while self.running() && self.handle_input() {
+            self.update();
         }
     }
 
