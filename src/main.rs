@@ -63,6 +63,7 @@ impl<'a> Slice<'a> {
     }
 
     fn run(&mut self) {
+        self.buf_units();
         while self.running() {
             self.update();
             match self.state {
@@ -120,6 +121,7 @@ impl<'a> Slice<'a> {
                     row.insert(x + x1, unit);
                     self.slice.insert(y + y1, row);
                 }
+                self.buf_unit(x + x1, y + y1);
             }
         }
     }
@@ -275,7 +277,6 @@ impl<'a> Slice<'a> {
     }
 
     fn update(&mut self) {
-        self.buf_units();
         self.buf_emitter();
         self.buf_cursor();
 
