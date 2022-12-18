@@ -224,6 +224,13 @@ impl<'a> Slice<'a> {
     }
 
     fn unbuf_cursor(&mut self) {
+        for y in self.cursor_pos.1 .. self.cursor_pos.1 + self.cursor_size {
+            for x in self.cursor_pos.0 .. self.cursor_pos.0 + self.cursor_size {
+                if y < UNITS_PER_ROW && x < UNITS_PER_ROW {
+                    self.buf_unit(x, y);
+                }
+            }
+        }
     }
 
     fn buf_cursor(&mut self) {
