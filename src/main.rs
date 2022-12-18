@@ -22,6 +22,7 @@ struct Slice<'a> {
     slice: HashMap<usize, HashMap<usize, Unit>>,
     buffer: Vec<u32>,
     window: &'a mut Window,
+    cursor_pos: (usize, usize),
     cursor_size: usize,
     theme: Theme,
     state: State,
@@ -34,6 +35,7 @@ impl<'a> Slice<'a> {
     fn new(window: &'a mut Window) -> Self {
         let slice = HashMap::new();
         let buffer = vec![0; WINDOW_WIDTH * WINDOW_WIDTH];
+        let cursor_pos = (0, 0);
         let cursor_size = 8;
         let theme = Theme::get(ThemeId::Sandshell);
         let state = State::Stopped;
@@ -45,6 +47,7 @@ impl<'a> Slice<'a> {
             slice,
             buffer,
             window,
+            cursor_pos,
             cursor_size,
             theme,
             state,
@@ -158,14 +161,17 @@ impl<'a> Slice<'a> {
         }
     }
 
-    fn mouse_pos_to_unit_pos(&self) -> (usize, usize) {
+    fn mouse_pos_to_unit_pos(&mut self) -> (usize, usize) {
         let mouse_pos = self.window.get_mouse_pos(MouseMode::Clamp).unwrap();
         let mx = mouse_pos.0;
         let my = mouse_pos.1;
         let ux = mx as usize / UNIT_WIDTH;
         let uy = my as usize / UNIT_WIDTH;
 
-        (ux, uy)
+        self.unbuf_cursor();
+
+        self.cursor_pos = (ux, uy);
+        self.cursor_pos
     }
 
     fn gravity(&mut self) {
@@ -215,6 +221,9 @@ impl<'a> Slice<'a> {
                 self.buffer[py * WINDOW_WIDTH + self.emitter * UNIT_WIDTH + px] = 0;
             }
         }
+    }
+
+    fn unbuf_cursor(&mut self) {
     }
 
     fn buf_cursor(&mut self) {
