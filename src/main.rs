@@ -88,6 +88,7 @@ impl<'a> Slice<'a> {
             if scroll.1 > 0.0 {
                 self.cursor_size += 2;
             } else if self.cursor_size > 2 {
+                self.unbuf_cursor();
                 self.cursor_size -= 2;
             }
         }
