@@ -106,9 +106,11 @@ impl<'a> Slice<'a> {
             return false;
         } else if self.window.is_key_down(Key::Left) && self.emitter > 0 {
             self.update();
+            self.buf_unit(self.emitter, 0);
             self.emitter -= 1;
         } else if self.window.is_key_down(Key::Right) && self.emitter < UNITS_PER_ROW - 1 {
             self.update();
+            self.buf_unit(self.emitter, 0);
             self.emitter += 1;
         }
 
