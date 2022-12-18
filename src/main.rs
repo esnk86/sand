@@ -183,12 +183,16 @@ impl<'a> Slice<'a> {
                 self.x = Some(x2);
                 self.y = Some(y2);
                 if y2 >= UNITS_PER_ROW - 1 {
-                    break;
+                    self.land();
                 }
                 return;
             }
         }
 
+        self.land();
+    }
+
+    fn land(&mut self) {
         self.x = None;
         self.y = None;
     }
