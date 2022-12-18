@@ -12,12 +12,21 @@ const UNIT_WIDTH: usize = 16;
 const UNITS_PER_ROW: usize = 39;
 const WINDOW_WIDTH: usize = UNIT_WIDTH * UNITS_PER_ROW;
 
+enum State {
+    Playing,
+    Paused,
+    Stopped,
+}
+
 struct Slice<'a> {
     slice: HashMap<usize, HashMap<usize, Unit>>,
     buffer: Vec<u32>,
     window: &'a mut Window,
     cursor_size: usize,
     theme: Theme,
+    state: State,
+    x: Option<usize>,
+    y: Option<usize>,
 }
 
 impl<'a> Slice<'a> {
@@ -26,6 +35,9 @@ impl<'a> Slice<'a> {
         let buffer = vec![0; WINDOW_WIDTH * WINDOW_WIDTH];
         let cursor_size = 8;
         let theme = Theme::get(ThemeId::Sandshell);
+        let state = State::Stopped;
+        let x = None;
+        let y = None;
 
         Self {
             slice,
@@ -33,6 +45,9 @@ impl<'a> Slice<'a> {
             window,
             cursor_size,
             theme,
+            state,
+            x,
+            y,
         }
     }
 
@@ -46,14 +61,12 @@ impl<'a> Slice<'a> {
 
     fn run(&mut self) {
         while self.running() {
-            while self.running() && self.handle_input() {
-                self.update();
+            self.update();
+            match self.state {
+                State::Playing => self.playing(),
+                State::Paused  => self.paused(),
+                State::Stopped => self.stopped(),
             }
-
-            while self.running() && self.put_sand_unit() {
-            }
-
-            self.clear_sand();
         }
     }
 
@@ -64,9 +77,6 @@ impl<'a> Slice<'a> {
         } else if self.window.get_mouse_down(MouseButton::Right) {
             let (x, y) = self.mouse_pos_to_unit_pos();
             self.put_unit(x, y, self.cursor_size, Unit::Air);
-        } else if self.window.is_key_released(Key::S) {
-            self.update();
-            return false;
         } else if let Some(scroll) = self.window.get_scroll_wheel() {
             if scroll.1 > 0.0 {
                 self.cursor_size += 2;
@@ -75,6 +85,21 @@ impl<'a> Slice<'a> {
             }
         }
 
+        if self.window.is_key_released(Key::S) {
+            self.update();
+            self.play();
+            return false;
+        } else if self.window.is_key_released(Key::P) {
+            self.update();
+            self.pause();
+            return false;
+        } else if self.window.is_key_released(Key::M) {
+            self.update();
+            self.stop();
+            return false;
+        }
+
+        self.update();
         return true;
     }
 
@@ -134,35 +159,32 @@ impl<'a> Slice<'a> {
         (ux, uy)
     }
 
-    fn put_sand_unit(&mut self) -> bool {
-        let mut x1 = self.centre();
-        let mut y1 = 0;
-
-        'GRAVITY: loop {
-            if !self.handle_input() {
-                return false;
-            }
-
-            let y2 = y1 + 1;
-
-            for x2 in [x1, x1-1, x1+1] {
-                if self.get_unit(x2, y2) == Unit::Air {
-                    self.put_unit(x1, y1, 1, Unit::Air);
-                    x1 = x2;
-                    y1 = y2;
-                    self.put_unit(x1, y1, 1, Unit::Sand);
-                    self.update();
-                    if y1 + 1 == UNITS_PER_ROW {
-                        break;
-                    }
-                    continue 'GRAVITY;
-                }
-            }
-
-            self.put_unit(x1, y1, 1, Unit::Sand);
-            self.update();
-            return true;
+    fn gravity(&mut self) {
+        if self.x.is_none() {
+            self.x = Some(self.centre());
+            self.y = Some(0);
         }
+
+        let x1 = self.x.unwrap();
+        let y1 = self.y.unwrap();
+        let y2 = y1 + 1;
+
+        for x2 in [x1, x1-1, x1+1] {
+            if self.get_unit(x2, y2) == Unit::Air {
+                self.put_unit(x1, y1, 1, Unit::Air);
+                self.put_unit(x2, y2, 1, Unit::Sand);
+                //self.update();
+                self.x = Some(x2);
+                self.y = Some(y2);
+                if y2 >= UNITS_PER_ROW - 1 {
+                    break;
+                }
+                return;
+            }
+        }
+
+        self.x = None;
+        self.y = None;
     }
 
     fn clear_sand(&mut self) {
@@ -200,6 +222,37 @@ impl<'a> Slice<'a> {
                     }
                 }
             }
+        }
+    }
+
+    fn play(&mut self) {
+        self.state = State::Playing;
+    }
+
+    fn pause(&mut self) {
+        self.state = State::Paused;
+    }
+
+    fn stop(&mut self) {
+        self.x = None;
+        self.y = None;
+        self.clear_sand();
+        self.state = State::Stopped;
+    }
+
+    fn playing(&mut self) {
+        while self.running() && self.handle_input() {
+            self.gravity();
+        }
+    }
+
+    fn paused(&mut self) {
+        while self.running() && self.handle_input() {
+        }
+    }
+
+    fn stopped(&mut self) {
+        while self.running() && self.handle_input() {
         }
     }
 
