@@ -14,8 +14,8 @@ Scroll wheel - adjust cursor size
 
 ### Keys
 
-s - start/stop sand
+s - start sand
 
-## Screenshots
+p - pause sand
 
-![Alt text](/screens/screen01.png?raw=true)
+m - stop sand
