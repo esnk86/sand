@@ -120,8 +120,10 @@ impl<'a> Slice<'a> {
     fn put_unit(&mut self, x: usize, y: usize, scale: usize, unit: Unit) {
         for uy in y .. y + scale {
             for ux in x .. x + scale {
-                self.slice[uy][ux] = unit;
-                self.buf_unit(ux, uy);
+                if uy < UNITS_PER_ROW && ux < UNITS_PER_ROW {
+                    self.slice[uy][ux] = unit;
+                    self.buf_unit(ux, uy);
+                }
             }
         }
     }
